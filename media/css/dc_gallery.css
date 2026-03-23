@@ -1,0 +1,204 @@
+/* DC Gallery — GLightbox + Macy + Swiper */
+
+.dc-gallery {
+    margin: 1rem 0;
+    box-sizing: border-box;
+}
+
+.dc-gallery *,
+.dc-gallery *::before,
+.dc-gallery *::after {
+    box-sizing: inherit;
+}
+
+/* —— Normal grid —— */
+.dc-gallery--normal {
+    display: grid;
+    grid-template-columns: repeat(var(--dcg-cols, 4), minmax(0, 1fr));
+    gap: 12px;
+}
+
+.dc-gallery--normal .dcg-cell-inner {
+    aspect-ratio: var(--dcg-aspect, 3 / 4);
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.dc-gallery--normal .dcg-glightbox {
+    display: block;
+    height: 100%;
+    text-decoration: none;
+}
+
+.dc-gallery--normal .dcg-glightbox img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* —— Macy tiles —— */
+.dc-gallery--tiles .dcg-macy-inner {
+    position: relative;
+}
+
+.dc-gallery--tiles .dcg-macy-item {
+    padding: 0 6px 12px;
+}
+
+.dc-gallery--tiles .dcg-glightbox {
+    display: block;
+    text-decoration: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dc-gallery--tiles .dcg-glightbox img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* —— Swiper shared —— */
+.dc-gallery.dcg-swiper {
+    position: relative;
+    padding-bottom: 40px;
+}
+
+.dc-gallery .swiper-button-next,
+.dc-gallery .swiper-button-prev {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--dcg-nav-bg, #111111);
+    color: var(--dcg-nav-color, #ffffff);
+    opacity: var(--dcg-nav-opacity, 0.45);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dc-gallery .swiper-button-next .swiper-navigation-icon,
+.dc-gallery .swiper-button-prev .swiper-navigation-icon {
+    display: block;
+    width: 10px;
+    height: 18px;
+    flex: 0 0 auto;
+}
+
+.dc-gallery .swiper-button-prev .swiper-navigation-icon {
+    transform: rotate(180deg);
+}
+
+.dc-gallery .swiper-button-next::after,
+.dc-gallery .swiper-button-prev::after {
+    display: none;
+    content: none;
+}
+
+.dc-gallery:hover .swiper-button-next,
+.dc-gallery:hover .swiper-button-prev {
+    opacity: var(--dcg-nav-hover-opacity, 1);
+}
+
+.dc-gallery .swiper-button-next:hover,
+.dc-gallery .swiper-button-prev:hover {
+    transform: scale(1.04);
+}
+
+.dc-gallery.dcg-swiper .swiper-pagination-bullet-active {
+    background: #333;
+}
+
+.dcg-slide-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.dcg-slide-media .dcg-slide-link {
+    display: block;
+    height: 100%;
+    text-decoration: none;
+}
+
+.dcg-slide-media .dcg-slide-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Coverflow slide width */
+.dc-gallery--coverflow .swiper-slide {
+    width: 72%;
+    max-width: 480px;
+}
+
+/* Cards */
+.dc-gallery--cards.dcg-swiper {
+    min-height: 360px;
+    padding: 28px 12px 48px;
+}
+
+/* —— Thumbs gallery —— */
+.dc-gallery--thumbs .dcg-swiper-main {
+    width: 100%;
+    margin-bottom: 14px;
+    padding-bottom: 36px;
+}
+
+.dc-gallery--thumbs .dcg-swiper-thumbs {
+    width: 100%;
+    padding: 4px 0;
+}
+
+.dc-gallery--thumbs .dcg-swiper-thumbs .swiper-slide {
+    width: 88px;
+    height: 88px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.dc-gallery--thumbs .dcg-swiper-thumbs .swiper-slide-thumb-active {
+    opacity: 1;
+}
+
+.dcg-thumb-square {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.dc-gallery--thumbs .swiper-slide-thumb-active .dcg-thumb-square {
+    border-color: rgba(0, 0, 0, 0.35);
+}
+
+.dcg-thumb-square .dcg-thumb-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+}
+
+.dcg-thumb-square .dcg-thumb-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.dc-gallery--thumbs .dcg-swiper-main .dcg-slide-media .dcg-slide-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

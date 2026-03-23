@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="content" method="upgrade" version="4.0">
+    <name>plg_content_dc_gallery</name>
+    <author>Design Cart</author>
+    <creationDate>2026-03-23</creationDate>
+    <copyright>(C) Design Cart</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+    <version>2.0.0</version>
+    <description>PLG_CONTENT_DC_GALLERY_XML_DESCRIPTION</description>
+
+    <files>
+        <filename plugin="dc_gallery">dc_gallery.php</filename>
+        <folder>media</folder>
+    </files>
+
+    <languages>
+        <language tag="en-GB">language/en-GB/plg_content_dc_gallery.ini</language>
+        <language tag="en-GB">language/en-GB/plg_content_dc_gallery.sys.ini</language>
+        <language tag="pl-PL">language/pl-PL/plg_content_dc_gallery.ini</language>
+        <language tag="pl-PL">language/pl-PL/plg_content_dc_gallery.sys.ini</language>
+    </languages>
+
+    <config>
+        <fields name="params">
+            <fieldset name="basic" label="PLG_CONTENT_DC_GALLERY_TAB_OPTIONS">
+                <field
+                    name="base_folder"
+                    type="text"
+                    label="PLG_CONTENT_DC_GALLERY_BASE_FOLDER_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_BASE_FOLDER_DESC"
+                    default="images/mygalleries"
+                    size="60"
+                />
+                <field
+                    name="mode"
+                    type="list"
+                    label="PLG_CONTENT_DC_GALLERY_MODE_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_MODE_DESC"
+                    default="normal"
+                >
+                    <option value="normal">PLG_CONTENT_DC_GALLERY_MODE_OPTION_NORMAL</option>
+                    <option value="tiles">PLG_CONTENT_DC_GALLERY_MODE_OPTION_TILES</option>
+                    <option value="slideshow">PLG_CONTENT_DC_GALLERY_MODE_OPTION_SLIDESHOW</option>
+                    <option value="carousel">PLG_CONTENT_DC_GALLERY_MODE_OPTION_CAROUSEL</option>
+                    <option value="coverflow">PLG_CONTENT_DC_GALLERY_MODE_OPTION_COVERFLOW</option>
+                    <option value="cards">PLG_CONTENT_DC_GALLERY_MODE_OPTION_CARDS</option>
+                    <option value="thumbs">PLG_CONTENT_DC_GALLERY_MODE_OPTION_THUMBS</option>
+                </field>
+                <field
+                    name="columns"
+                    type="number"
+                    label="PLG_CONTENT_DC_GALLERY_COLUMNS_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_COLUMNS_DESC"
+                    default="4"
+                    min="1"
+                    max="12"
+                />
+                <field
+                    name="ratio"
+                    type="text"
+                    label="PLG_CONTENT_DC_GALLERY_RATIO_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_RATIO_DESC"
+                    default="3:4"
+                    size="10"
+                />
+                <field
+                    name="slide_ratio"
+                    type="text"
+                    label="PLG_CONTENT_DC_GALLERY_SLIDE_RATIO_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_SLIDE_RATIO_DESC"
+                    default="16:9"
+                    size="10"
+                />
+                <field
+                    name="slides_visible"
+                    type="number"
+                    label="PLG_CONTENT_DC_GALLERY_SLIDES_VISIBLE_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_SLIDES_VISIBLE_DESC"
+                    default="3"
+                    min="1"
+                    max="12"
+                />
+                <field
+                    name="space"
+                    type="number"
+                    label="PLG_CONTENT_DC_GALLERY_SPACE_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_SPACE_DESC"
+                    default="16"
+                    min="0"
+                    max="80"
+                />
+                <field
+                    name="loop"
+                    type="radio"
+                    label="PLG_CONTENT_DC_GALLERY_LOOP_LABEL"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                >
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="glightbox_loop"
+                    type="radio"
+                    label="PLG_CONTENT_DC_GALLERY_GLIGHTBOX_LOOP_LABEL"
+                    default="1"
+                    class="btn-group btn-group-yesno"
+                >
+                    <option value="1">JYES</option>
+                    <option value="0">JNO</option>
+                </field>
+                <field
+                    name="nav_bg"
+                    type="text"
+                    label="PLG_CONTENT_DC_GALLERY_NAV_BG_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_NAV_BG_DESC"
+                    default="#111111"
+                    size="12"
+                />
+                <field
+                    name="nav_color"
+                    type="text"
+                    label="PLG_CONTENT_DC_GALLERY_NAV_COLOR_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_NAV_COLOR_DESC"
+                    default="#ffffff"
+                    size="12"
+                />
+                <field
+                    name="nav_opacity"
+                    type="number"
+                    label="PLG_CONTENT_DC_GALLERY_NAV_OPACITY_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_NAV_OPACITY_DESC"
+                    default="0.45"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                />
+                <field
+                    name="nav_hover_opacity"
+                    type="number"
+                    label="PLG_CONTENT_DC_GALLERY_NAV_HOVER_OPACITY_LABEL"
+                    description="PLG_CONTENT_DC_GALLERY_NAV_HOVER_OPACITY_DESC"
+                    default="1"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                />
+            </fieldset>
+            <fieldset name="documentation" label="PLG_CONTENT_DC_GALLERY_TAB_DOCUMENTATION">
+                <field
+                    name="documentation_note"
+                    type="note"
+                    class="alert alert-info"
+                    label="PLG_CONTENT_DC_GALLERY_DOCUMENTATION_TITLE"
+                    description="PLG_CONTENT_DC_GALLERY_DOCUMENTATION"
+                />
+            </fieldset>
+        </fields>
+    </config>
+</extension>
