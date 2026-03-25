@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" group="content" method="upgrade" version="4.0">
-    <name>plg_content_dc_gallery</name>
+    <name>Content - DC Gallery</name>
     <author>Design Cart</author>
     <creationDate>2026-03-23</creationDate>
     <copyright>(C) Design Cart</copyright>
@@ -12,6 +12,10 @@
         <filename plugin="dc_gallery">dc_gallery.php</filename>
         <folder>media</folder>
     </files>
+
+    <updateservers>
+		<server type="extension" name="UPDATE_SERVER">https://www.designcart.pl/download/updates/update_plg_content_dc_gallery.xml</server>
+	</updateservers>
 
     <languages>
         <language tag="en-GB">language/en-GB/plg_content_dc_gallery.ini</language>
