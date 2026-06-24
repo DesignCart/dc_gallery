@@ -1,26 +1,8 @@
 <?php
-    /**
-     * @package     DC Gallery
-     * @subpackage  Content Plugin
-     * @author      Design Cart
-     * @copyright   Copyright (C) 2025 Design Cart. All rights reserved.
-     * @license     GNU General Public License version 3 or later; see LICENSE.txt
-     *
-     * This file is part of DC Gallery.
-     *
-     * DC Gallery is free software: you can redistribute it and/or modify
-     * it under the terms of the GNU General Public License as published by
-     * the Free Software Foundation, either version 3 of the License, or
-     * (at your option) any later version.
-     *
-     * DC Gallery is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-     * GNU General Public License for more details.
-     *
-     * You should have received a copy of the GNU General Public License
-     * along with DC Gallery. If not, see <https://www.gnu.org/licenses/>.
-    */
+/**
+ * @package     Joomla.Plugin
+ * @subpackage  Content.dc_gallery
+ */
 
 defined('_JEXEC') or die;
 
@@ -150,7 +132,7 @@ final class PlgContentDc_gallery extends CMSPlugin
             $glightboxLoop
         );
 
-        return $html . $js;
+        return $html . $this->renderPoweredBy() . $js;
     }
 
     private function getImagesForSource(string $source): array
@@ -165,22 +147,292 @@ final class PlgContentDc_gallery extends CMSPlugin
             return [];
         }
 
+        $performance = $this->getPerformanceSettings();
+        $cacheDir = null;
+
+        if ($performance['webp'] || $performance['resize']) {
+            $cacheDir = $this->resolveCacheDirectory($fullPath, $fullRelative, $performance['webp'], $performance['resize']);
+        }
+
         $files = Folder::files($fullPath, '\.(jpe?g|png|gif|webp|avif)$', false, true);
         sort($files);
 
         $images = [];
         foreach ($files as $absoluteFile) {
-            $relative = str_replace($siteRoot . '/', '', Path::clean($absoluteFile));
-            $url = Uri::root() . str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+            $originalUrl = $this->pathToUrl($absoluteFile, $siteRoot);
+            $displayUrl = $this->resolveDisplayUrl($absoluteFile, $siteRoot, $performance, $cacheDir);
             $title = pathinfo($absoluteFile, PATHINFO_FILENAME);
 
             $images[] = [
-                'url' => $url,
+                'url' => $originalUrl,
+                'display_url' => $displayUrl,
                 'title' => htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
             ];
         }
 
         return $images;
+    }
+
+    /**
+     * @return array{webp: bool, resize: bool, max_width: int, max_height: int}
+     */
+    private function getPerformanceSettings(): array
+    {
+        return [
+            'webp' => $this->toBool($this->params->get('webp_enable', '1'), true),
+            'resize' => $this->toBool($this->params->get('resize_enable', '1'), true),
+            'max_width' => $this->normalizeMaxDimension($this->params->get('max_width', '400'), 400),
+            'max_height' => $this->normalizeMaxDimension($this->params->get('max_height', '300'), 300),
+        ];
+    }
+
+    private function resolveCacheDirectory(
+        string $galleryPath,
+        string $galleryRelative,
+        bool $webpEnabled,
+        bool $resizeEnabled
+    ): string {
+        $subdir = $webpEnabled ? 'webp' : 'thumbs';
+        $localCache = Path::clean($galleryPath . '/' . $subdir);
+
+        if (!is_dir($localCache)) {
+            Folder::create($localCache, 0775);
+        }
+
+        $this->makeDirectoryWritable($localCache);
+
+        if (is_dir($localCache) && is_writable($localCache)) {
+            return $localCache;
+        }
+
+        $fallback = Path::clean(JPATH_ROOT . '/cache/dc_gallery/' . md5($galleryRelative) . '/' . $subdir);
+
+        if (!is_dir($fallback)) {
+            Folder::create($fallback, 0775);
+        }
+
+        $this->makeDirectoryWritable($fallback);
+
+        return $fallback;
+    }
+
+    private function makeDirectoryWritable(string $path): void
+    {
+        if (!is_dir($path)) {
+            return;
+        }
+
+        if (!is_writable($path)) {
+            @chmod($path, 02775);
+        }
+    }
+
+    /**
+     * @param array{webp: bool, resize: bool, max_width: int, max_height: int} $performance
+     */
+    private function resolveDisplayUrl(
+        string $sourceFile,
+        string $siteRoot,
+        array $performance,
+        ?string $cacheDir
+    ): string {
+        $originalUrl = $this->pathToUrl($sourceFile, $siteRoot);
+
+        if (!$performance['webp'] && !$performance['resize']) {
+            return $originalUrl;
+        }
+
+        if ($cacheDir === null || $cacheDir === '' || !is_dir($cacheDir) || !is_writable($cacheDir)) {
+            return $originalUrl;
+        }
+
+        $basename = pathinfo($sourceFile, PATHINFO_FILENAME);
+        $sourceExt = strtolower((string) pathinfo($sourceFile, PATHINFO_EXTENSION));
+        $cacheFilename = $this->buildCacheFilename($basename, $sourceExt, $performance);
+        $cachePath = Path::clean($cacheDir . '/' . $cacheFilename);
+
+        if (!is_file($cachePath)) {
+            $this->generateOptimizedImage($sourceFile, $cachePath, $performance);
+        }
+
+        if (is_file($cachePath)) {
+            return $this->pathToUrl($cachePath, $siteRoot);
+        }
+
+        return $originalUrl;
+    }
+
+    /**
+     * @param array{webp: bool, resize: bool, max_width: int, max_height: int} $performance
+     */
+    private function buildCacheFilename(string $basename, string $sourceExt, array $performance): string
+    {
+        if ($performance['resize']) {
+            $suffix = '-' . $performance['max_width'] . '-' . $performance['max_height'];
+            $ext = $performance['webp'] ? 'webp' : $sourceExt;
+
+            return $basename . $suffix . '.' . $ext;
+        }
+
+        return $basename . '.webp';
+    }
+
+    /**
+     * @param array{webp: bool, resize: bool, max_width: int, max_height: int} $performance
+     */
+    private function generateOptimizedImage(string $sourcePath, string $destPath, array $performance): bool
+    {
+        if (!is_file($sourcePath) || !function_exists('imagecreatetruecolor')) {
+            return false;
+        }
+
+        $image = $this->loadImageResource($sourcePath);
+
+        if ($image === null) {
+            return false;
+        }
+
+        if ($performance['resize']) {
+            $image = $this->resizeImageResource(
+                $image,
+                $performance['max_width'],
+                $performance['max_height']
+            );
+        }
+
+        $cacheDir = dirname($destPath);
+
+        if (!is_dir($cacheDir)) {
+            Folder::create($cacheDir, 0775);
+        }
+
+        $this->makeDirectoryWritable($cacheDir);
+
+        if (!is_writable($cacheDir)) {
+            imagedestroy($image);
+
+            return false;
+        }
+
+        $saved = $this->saveImageResource($image, $destPath, $performance['webp']);
+        imagedestroy($image);
+
+        return $saved;
+    }
+
+    /**
+     * @return \GdImage|resource|null
+     */
+    private function loadImageResource(string $path)
+    {
+        $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+
+        switch ($ext) {
+            case 'jpg':
+            case 'jpeg':
+                return @imagecreatefromjpeg($path) ?: null;
+            case 'png':
+                $img = @imagecreatefrompng($path);
+
+                if ($img !== false) {
+                    imagepalettetotruecolor($img);
+                    imagealphablending($img, true);
+                    imagesavealpha($img, true);
+                }
+
+                return $img ?: null;
+            case 'gif':
+                return @imagecreatefromgif($path) ?: null;
+            case 'webp':
+                return function_exists('imagecreatefromwebp') ? (@imagecreatefromwebp($path) ?: null) : null;
+            case 'avif':
+                return function_exists('imagecreatefromavif') ? (@imagecreatefromavif($path) ?: null) : null;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * @param \GdImage|resource $image
+     * @return \GdImage|resource
+     */
+    private function resizeImageResource($image, int $maxWidth, int $maxHeight)
+    {
+        $srcW = imagesx($image);
+        $srcH = imagesy($image);
+
+        if ($srcW <= $maxWidth && $srcH <= $maxHeight) {
+            return $image;
+        }
+
+        $ratio = min($maxWidth / $srcW, $maxHeight / $srcH);
+        $newW = max(1, (int) round($srcW * $ratio));
+        $newH = max(1, (int) round($srcH * $ratio));
+
+        $resized = imagecreatetruecolor($newW, $newH);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+        $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+        imagefilledrectangle($resized, 0, 0, $newW, $newH, $transparent);
+        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newW, $newH, $srcW, $srcH);
+        imagedestroy($image);
+
+        return $resized;
+    }
+
+    /**
+     * @param \GdImage|resource $image
+     */
+    private function saveImageResource($image, string $destPath, bool $asWebp): bool
+    {
+        if ($asWebp && function_exists('imagewebp')) {
+            return @imagewebp($image, $destPath, 85);
+        }
+
+        $ext = strtolower((string) pathinfo($destPath, PATHINFO_EXTENSION));
+
+        switch ($ext) {
+            case 'jpg':
+            case 'jpeg':
+                return @imagejpeg($image, $destPath, 85);
+            case 'png':
+                return @imagepng($image, $destPath, 6);
+            case 'gif':
+                return @imagegif($image, $destPath);
+            case 'webp':
+                return function_exists('imagewebp') ? @imagewebp($image, $destPath, 85) : false;
+            default:
+                return false;
+        }
+    }
+
+    private function pathToUrl(string $absolutePath, string $siteRoot): string
+    {
+        $relative = str_replace($siteRoot . '/', '', Path::clean($absolutePath));
+
+        return Uri::root() . str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+    }
+
+    private function normalizeMaxDimension($value, int $default): int
+    {
+        $n = (int) $value;
+
+        if ($n < 50) {
+            return $default;
+        }
+
+        return min(4000, $n);
+    }
+
+    private function renderPoweredBy(): string
+    {
+        $logoUrl = Uri::root(true) . '/plugins/content/dc_gallery/media/img/favicon.png';
+
+        return '<div class="dcg-powered-by">'
+            . '<a href="https://www.designcart.pl/" target="_blank" rel="noopener noreferrer">'
+            . 'Powered by <img src="' . htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8')
+            . '" alt="Design Cart" width="16" height="16" loading="lazy">'
+            . '</a></div>';
     }
 
     private function loadAssetsForMode(string $mode): void
@@ -209,7 +461,7 @@ final class PlgContentDc_gallery extends CMSPlugin
     }
 
     /**
-     * @param array<int, array{url: string, title: string}> $images
+     * @param array<int, array{url: string, display_url: string, title: string}> $images
      */
     private function renderLayout(
         string $containerId,
@@ -275,23 +527,25 @@ final class PlgContentDc_gallery extends CMSPlugin
     }
 
     /**
-     * @param array{url: string, title: string} $image
+     * @param array{url: string, display_url: string, title: string} $image
      */
     private function renderGlightboxAnchor(array $image, string $galleryId, string $extraClass): string
     {
         $classes = trim('dcg-glightbox ' . $extraClass);
         $plainTitle = html_entity_decode($image['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $glightbox = 'title: ' . $plainTitle;
+        $displayUrl = $image['display_url'] ?? $image['url'];
 
         return '<a href="' . $image['url'] . '" class="' . htmlspecialchars($classes, ENT_QUOTES, 'UTF-8')
             . '" data-gallery="' . htmlspecialchars($galleryId, ENT_QUOTES, 'UTF-8')
             . '" data-glightbox="' . htmlspecialchars($glightbox, ENT_QUOTES, 'UTF-8') . '">'
-            . '<img src="' . $image['url'] . '" alt="' . $image['title'] . '" loading="lazy" width="800" height="600">'
+            . '<img src="' . htmlspecialchars($displayUrl, ENT_QUOTES, 'UTF-8') . '" alt="' . $image['title']
+            . '" loading="lazy" width="800" height="600">'
             . '</a>';
     }
 
     /**
-     * @param array<int, array{url: string, title: string}> $images
+     * @param array<int, array{url: string, display_url: string, title: string}> $images
      */
     private function renderSwiperLayout(
         string $containerId,
