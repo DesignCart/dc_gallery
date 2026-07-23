@@ -99,3 +99,4 @@
 
 <h2>🌐 Official project page</h2>
 <p><a href="https://www.designcart.pl/laboratorium/306-galeria-obrazow-dla-joomla-z-wieloma-trybami-wyswietlania-darmowy-plugin.html">https://www.designcart.pl/laboratorium/306-galeria-obrazow-dla-joomla-z-wieloma-trybami-wyswietlania-darmowy-plugin.html</a></p>
+<p>👨‍💻 author: <a href="https://www.designcart.pl/pawel-nosko.html">Paweł Nosko</a></p>
